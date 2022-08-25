@@ -1,4 +1,5 @@
 ﻿using HwRemind.Api.Endpoints.Assignments.Models;
+using HwRemind.Api.Gloabl_Services.Models;
 using Microsoft.AspNetCore.JsonPatch;
 
 namespace HwRemind.Api.Endpoints.Assignments.Repositories
@@ -6,7 +7,7 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
     public interface IAssignmentRepository
     {
         public Task<Assignment> GetById(int id);
-        public Task<IEnumerable<Assignment>> GetAllByUserId(int id);
+        public Task<IEnumerable<Assignment>> GetAllByLoginId(int id, PageFilter filter);
 
         public Task AddAssignment(Assignment assignment);
         public Task<bool> DeleteAssignment(int id);

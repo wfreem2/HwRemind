@@ -2,10 +2,14 @@
 
 namespace HwRemind.Api.Endpoints.Assignments.Models
 {
-    public class Assignment
+    public class Assignment : BaseAssignment
+    {
+        public int? userId { get; set; }
+    }
+
+    public class BaseAssignment
     {
         public int? id { get; set; }
-        public int? userId { get; set; }
         [Required]
         public string name { get; set; }
         public string description { get; set; }

@@ -1,5 +1,6 @@
 using HwRemind.Api.Endpoints.Assignments.Repositories;
 using HwRemind.Api.Endpoints.Users.Repositories;
+using HwRemind.Api.Gloabl_Services;
 using HwRemind.API.Endpoints.Authentication.Services;
 using HwRemind.Configs;
 using HwRemind.Contexts;
@@ -44,6 +45,16 @@ namespace HwRemind
             services.AddStackExchangeRedisCache(opts =>
             {
                 opts.Configuration = Configuration.GetConnectionString("Redis");
+            });
+
+            //For paginated results
+            services.AddHttpContextAccessor();
+            services.AddSingleton<IUriService>(o =>
+            {
+                var accessor = o.GetRequiredService<IHttpContextAccessor>();
+                var request = accessor.HttpContext.Request;
+                var uri = string.Concat(request.Scheme, "://", request.Host.ToUriComponent());
+                return new UriService(uri);
             });
 
             services.AddSingleton<IJWTService, JWTService>();
