@@ -41,6 +41,19 @@ namespace HwRemind.Endpoints.Authentication.Repositories
 
             return login;
         }
+        
+        public async Task<Login> GetLogin(int id)
+        {
+            var login = await _logins.Where(l => l.id == id).FirstOrDefaultAsync();
+            if(login == null) { return login; }
+
+            var saltPswd = login.password.Split(delimeter);
+
+            login.hashedPassword = saltPswd[0];
+            login.salt = saltPswd[1];
+
+            return login;
+        }
 
         public async Task<RefreshToken> GetRefreshToken(string token)
         {

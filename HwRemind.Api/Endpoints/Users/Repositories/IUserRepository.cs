@@ -10,7 +10,7 @@ namespace HwRemind.Api.Endpoints.Users.Repositories
 
         public Task AddUser(User user);
         public Task<bool> DeleteUser(int id);
-        public Task<bool> UpdateUser(User user);
+        public Task<bool> UpdateUser(int id, User user);
         public Task<bool> UpdateUser(int id, JsonPatchDocument<User> user);
     }
 }

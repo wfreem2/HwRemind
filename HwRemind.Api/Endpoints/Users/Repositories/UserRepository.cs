@@ -43,15 +43,15 @@ namespace HwRemind.Api.Endpoints.Users.Repositories
             return await _users.Where(u => u.loginId == id).FirstOrDefaultAsync();
         }
 
-        public async Task<bool> UpdateUser(User user)
+        public async Task<bool> UpdateUser(int id, User user)
         {
-            var existingUser = await _users.FindAsync(user.id);
+            var existingUser = await _users.FindAsync(id);
             if(existingUser == null) { return false; }
 
-            user.id = existingUser.id;
-            existingUser = user;
+            existingUser.firstName = user.firstName;
+            existingUser.lastName = user.lastName;
+            existingUser.schoolName = user.schoolName;
 
-            _dbContext.Entry(existingUser).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
 
             return true;

@@ -77,6 +77,11 @@ namespace HwRemind
 
                options.Validate();
            });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("LoginRequired", policy => policy.RequireClaim("id"));
+            });
         }
 
 
