@@ -22,7 +22,7 @@ namespace HwRemind.Endpoints.Authentication.Services
         }
 
 
-        public Task<string> GenerateAccessToken(int loginId)
+        public async Task<string> GenerateAccessToken(int loginId)
         {
             var claims = new Claim[]
             {
@@ -30,6 +30,23 @@ namespace HwRemind.Endpoints.Authentication.Services
                 new Claim(JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime().ToString()),
             };
 
+            return await generateAccessToken(claims);
+        }
+
+        public async Task<string> GenerateAccessToken(int loginId, int userId)
+        {
+            var claims = new Claim[]
+            {
+                new Claim("id", loginId.ToString()),
+                new Claim("userId", userId.ToString()),
+                new Claim(JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime().ToString()),
+            };
+
+            return await generateAccessToken(claims);
+        }
+
+        private Task<string> generateAccessToken(Claim[] claims)
+        {
             var credentials = GetSigningCredentials();
 
             var tokenOptions = new JwtSecurityToken(
@@ -71,7 +88,7 @@ namespace HwRemind.Endpoints.Authentication.Services
 
                 return Task.FromResult(validToken != null);
             }
-            catch (SecurityTokenException)
+            catch (Exception)
             {
                 return Task.FromResult(false);
             }
@@ -90,6 +107,8 @@ namespace HwRemind.Endpoints.Authentication.Services
         private DateTime GetRefreshTokenExpiration() => DateTime.UtcNow.AddDays(_jwtConfig.refreshExp);
         private SigningCredentials GetSigningCredentials() => new SigningCredentials(GetSignature(), _jwtConfig.alg);
         private SymmetricSecurityKey GetSignature() => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.secret));
+
+     
         public TokenValidationParameters TokenValidationParams
         {
             get

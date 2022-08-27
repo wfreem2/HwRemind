@@ -1,3 +1,4 @@
+using HwRemind.Api.Configs;
 using HwRemind.Api.Endpoints.Assignments.Repositories;
 using HwRemind.Api.Endpoints.Users.Repositories;
 using HwRemind.Api.Gloabl_Services;
@@ -91,7 +92,13 @@ namespace HwRemind
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("LoginRequired", policy => policy.RequireClaim("id"));
+                options.AddPolicy(PolicyNames.LoginRequired, policy => policy.RequireClaim("id"));
+                options.AddPolicy(PolicyNames.UserAndLoginRequired, 
+                    policy => {
+                        policy.RequireClaim("userId");
+                        policy.RequireClaim("id");
+                    }
+                );
             });
         }
 

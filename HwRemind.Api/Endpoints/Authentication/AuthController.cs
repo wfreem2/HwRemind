@@ -1,4 +1,5 @@
-﻿using HwRemind.API.Endpoints.Authentication.Services;
+﻿using HwRemind.Api.Endpoints.Users.Repositories;
+using HwRemind.API.Endpoints.Authentication.Services;
 using HwRemind.Endpoints.Authentication.Models;
 using HwRemind.Endpoints.Authentication.Repositories;
 using HwRemind.Endpoints.Authentication.Services;
@@ -19,36 +20,43 @@ namespace HwRemind.Endpoints.Authentication
         private readonly ILogger<AuthController> _logger;
         private readonly IJWTService _jwtService;
         private readonly IAuthRepository _authRepo;
+        private readonly IUserRepository _userRepo;
         private readonly IDistributedCache _cache;
 
 
         public AuthController(ILogger<AuthController> logger, IJWTService JWTService, IAuthRepository authRepository, 
-            IDistributedCache cache)
+            IUserRepository userRepository, IDistributedCache cache)
         {
             _cache = cache;
             _logger = logger;
             _jwtService = JWTService;
             _authRepo = authRepository;
+            _userRepo = userRepository;
         }
 
         [HttpPost, Route("")]
-        public async Task<IActionResult> Authenticate([FromBody] BaseLogin login,
+        public async Task<IActionResult> Login([FromBody] BaseLogin login,
             [FromServices] IPasswordService pswdService)
         {
             _logger.LogInformation("Generating JWT");
 
-            var existingLogin = await _authRepo.GetLogin(login.email);
+            var existingLogin = await _authRepo.GetLoginByEmail(login.email);
             if(existingLogin == null) { return BadRequest(); }
 
             var isPswdVerified = pswdService.IsMatch(login.password, existingLogin.hashedPassword, existingLogin.salt);
             if (!isPswdVerified) { return Unauthorized(); }
 
-            var accessToken = await _jwtService.GenerateAccessToken(existingLogin.id);
+            var existingUser = await _userRepo.GetUserByLoginId(existingLogin.id);
+
+            var accessToken =  existingUser == null ? 
+                await _jwtService.GenerateAccessToken(existingLogin.id) : 
+                await _jwtService.GenerateAccessToken(existingLogin.id, (int) existingUser.id);
+
             var refreshToken = await _jwtService.GenerateRefreshToken(existingLogin.id);
 
-            await _authRepo.AddRefreshToken(refreshToken);
+            await _authRepo.AddOrUpdateRefreshToken(refreshToken);
 
-            return Ok(new AuthenticationRequest { refreshToken = refreshToken.token, accesstoken = accessToken });
+            return Ok(new AuthenticationRequest { refreshToken = refreshToken.ToString(), accesstoken = accessToken });
         }
 
         [HttpPost, Route("refresh")]
@@ -64,7 +72,6 @@ namespace HwRemind.Endpoints.Authentication
             var isValid = await _jwtService.IsExpiredAccessTokenValid(oldToken);
             if (!isValid) { return BadRequest(); }
 
-
             var existingRefreshToken = await _authRepo.GetRefreshToken(token: refreshRequest.refreshToken);
 
             //If refresh token is expired or the token does not exist, client needs to login
@@ -73,11 +80,14 @@ namespace HwRemind.Endpoints.Authentication
 
             //Rotate refresh token
             var rotatedRefreshToken = await _jwtService.GenerateRefreshToken(existingRefreshToken.loginId);
-            var accessToken = await _jwtService.GenerateAccessToken(existingRefreshToken.loginId);
 
-            await _authRepo.AddRefreshToken(rotatedRefreshToken);
+            var accessToken = existingRefreshToken.userId == null ?
+                await _jwtService.GenerateAccessToken(existingRefreshToken.loginId) :
+                await _jwtService.GenerateAccessToken(existingRefreshToken.loginId, (int) existingRefreshToken.userId);
+
+            await _authRepo.AddOrUpdateRefreshToken(rotatedRefreshToken);
             
-            return Ok(new AuthenticationRequest { accesstoken = accessToken, refreshToken = rotatedRefreshToken.token });
+            return Ok(new AuthenticationRequest { accesstoken = accessToken, refreshToken = rotatedRefreshToken.ToString() });
         }
 
         [HttpPost, Route("revoke")]
@@ -108,5 +118,6 @@ namespace HwRemind.Endpoints.Authentication
                 AbsoluteExpiration = expiration,
             };
         }
+
     }
 }

@@ -3,8 +3,6 @@ using HwRemind.Api.Endpoints.Assignments.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using HwRemind.Api.Gloabl_Services.Models;
-using HwRemind.Endpoints.Authentication.Models;
-using HwRemind.Api.Endpoints.Users.Models;
 
 namespace HwRemind.Api.Endpoints.Assignments.Repositories
 {
@@ -12,13 +10,11 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
     {
 
         private readonly DbSet<Assignment> _assignments;
-        private readonly DbSet<User> _users;
         private readonly DBContext _dbContext;
 
         public AssignmentRepository(DBContext dbContext)
         {
             _dbContext = dbContext;
-            _users = dbContext.Users;
             _assignments = dbContext.Assignments;
         }
 
@@ -28,10 +24,9 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAssignment(int id)
+        public async Task<bool> DeleteAssignment(int id, int userId)
         {
-            var assignment = await _assignments.FindAsync(id);
-
+            var assignment = await _assignments.Where(a => a.userId == userId).FirstOrDefaultAsync();
             if(assignment == null) { return false; }
 
             _assignments.Remove(assignment);
@@ -40,24 +35,17 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
             return true;
         }
 
-        public async Task<IEnumerable<Assignment>> GetAllByLoginId(int id, PageFilter filter)
+        public async Task<IEnumerable<Assignment>> GetByUserId(int userId, PageFilter filter)
         {
-            filter.TotalRecords = await (
-                             from a in _assignments
-                             join u in _users on id equals u.loginId
-                             select a
-                           )
-                           .CountAsync();
+            filter.TotalRecords = await _assignments.Where(a => a.userId == userId).CountAsync();
 
-            return await (
-                        from a in _assignments
-                        join u in _users on id equals u.loginId
-                        select a
-                    )
-                    .Skip((filter.PageNumber - 1) * filter.PageSize)
-                    .Take(filter.PageSize)
-                    .OrderBy(a => a.name)
-                    .ToListAsync();
+           return await 
+                _assignments
+                .Where(a => a.userId == userId)
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .OrderBy(a => a.name)
+                .ToListAsync();
         }
 
         public async Task<Assignment> GetById(int id)
@@ -70,10 +58,10 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
             var existingAssignment = await _assignments.FindAsync(id);
             if(existingAssignment == null) { return false; }
 
-            assignment.id = existingAssignment.id;
-            existingAssignment = assignment;
+            existingAssignment.description = assignment.description;
+            existingAssignment.name = assignment.name;
+            existingAssignment.dueAt = assignment.dueAt;
 
-            _dbContext.Entry(existingAssignment).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync();
 
             return true;

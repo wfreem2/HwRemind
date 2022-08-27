@@ -31,7 +31,7 @@ namespace HwRemind.Tests.Controllers
                 password = "ialsoexist"
             };
 
-            mockRepo.Setup(m => m.GetLogin(It.IsAny<string>()))
+            mockRepo.Setup(m => m.GetLoginByEmail(It.IsAny<string>()))
             .ReturnsAsync(existingLogin);
 
             var controller = CreateRegistrationController();
@@ -54,7 +54,7 @@ namespace HwRemind.Tests.Controllers
                 password = "validpswd"
             };
 
-            mockRepo.Setup(m => m.GetLogin(It.IsAny<string>()))
+            mockRepo.Setup(m => m.GetLoginByEmail(It.IsAny<string>()))
            .ReturnsAsync(default(Login));
 
             mockPswdService.Setup(m => m.HashPassword(It.IsAny<string>()))

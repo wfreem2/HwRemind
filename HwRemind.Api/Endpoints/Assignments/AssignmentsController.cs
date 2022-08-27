@@ -1,52 +1,48 @@
-﻿using HwRemind.Api.Endpoints.Assignments.Models;
+﻿using HwRemind.Api.Configs;
+using HwRemind.Api.Endpoints.Assignments.Models;
 using HwRemind.Api.Endpoints.Assignments.Repositories;
-using HwRemind.Api.Endpoints.Users.Repositories;
 using HwRemind.Api.Gloabl_Services;
 using HwRemind.Api.Gloabl_Services.Models;
 using HwRemind.Extensions;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HwRemind.Api.Endpoints.Assignments
 {
-    [Authorize(Policy = "LoginRequired")]
     [ApiController]
     [Route("api/assignments")]
+    [Authorize(Policy = PolicyNames.UserAndLoginRequired)]
 
     public class AssignmentsController : ControllerBase
     {
         private readonly IAssignmentRepository _assignmentRepo;
         private readonly ILogger<AssignmentsController> _logger;
-        private readonly IUserRepository _userRepository;
 
-        public AssignmentsController(IAssignmentRepository assignmentRepo, ILogger<AssignmentsController> logger, IUserRepository userRepository)
+        public AssignmentsController(IAssignmentRepository assignmentRepo, ILogger<AssignmentsController> logger)
         {
             _logger = logger;
             _assignmentRepo = assignmentRepo;
-            _userRepository = userRepository;
         }
 
         [HttpGet, Route("me")]
         public async Task<IActionResult> GetAssignments([FromQuery] PageFilter filter, 
             [FromServices] IUriService uriService)
         {
-            var loginId = GetLoginIdFromClaim();
-           /* var user = await _userRepository.GetUserByLoginId(loginId);
+            var userId = HttpContext.GetUserIdFromClaim();
 
-            if (user == null) { return BadRequest(); }*/
-            //if(loginId != user.loginId) { return Unauthorized(); }
+            _logger.LogInformation($"Getting assignments from user: {userId}");
 
-            var assignments = await _assignmentRepo.GetAllByLoginId(loginId, filter);
+            var assignments = await _assignmentRepo.GetByUserId(userId, filter);
 
-            var route = Request.Path.Value;
+            if (!assignments.Any()) { return NoContent(); }
+
             var pagedResult = new 
-                PagedResult<Assignment>(
+                PagedResult<BaseAssignment>(
                 pagedData: assignments, 
                 filter: filter, 
                 totalRecords: filter.TotalRecords, 
                 uriService: uriService, 
-                route: route);
+                route: Request.Path.Value);
 
             return Ok(pagedResult);
         }
@@ -59,16 +55,22 @@ namespace HwRemind.Api.Endpoints.Assignments
 
             await _assignmentRepo.AddAssignment(assignment);
 
-            return NoContent();
+            return Ok(new { id = assignment.id });
         }
 
-        private int GetLoginIdFromClaim()
+
+        [HttpDelete, Route("{id}")]
+        public async Task<IActionResult> DeleteAssignment(int id)
         {
-            var claims = HttpContext.GetClaims();
-            var loginId = claims.Where(c => c.Type.Equals("id")).FirstOrDefault();
+            _logger.LogInformation($"Deleting assignment: {id}");
 
-            return int.Parse(loginId.Value);
+            var userId = HttpContext.GetUserIdFromClaim();
+            var isDeleted = await _assignmentRepo.DeleteAssignment(id, userId);
+
+            _logger.LogInformation($"Assignment deletion successful: {isDeleted}");
+
+            return isDeleted ? NoContent() : BadRequest();
         }
-
+      
     }
 }

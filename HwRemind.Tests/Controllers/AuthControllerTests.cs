@@ -62,7 +62,7 @@ namespace HwRemind.Tests.Controllers
                 token = "newtoken"
             });
 
-            mockRepo.Setup(m => m.GetLogin(login.email))
+            mockRepo.Setup(m => m.GetLoginByEmail(login.email))
             .ReturnsAsync(new Login
             {
                 id = loginId,
@@ -78,7 +78,7 @@ namespace HwRemind.Tests.Controllers
 
             var authController = CreateAuthController(context);
 
-            var result = await authController.Authenticate(login, mockPswdService.Object);
+            var result = await authController.Login(login, mockPswdService.Object);
 
             var ok = result as OkObjectResult;
             Assert.NotNull(ok, "Ok result should not be null");
@@ -90,7 +90,7 @@ namespace HwRemind.Tests.Controllers
             Assert.NotNull(authReq.refreshToken, "Refresh token should be provided");
 
             mockRepo.Verify(
-                m => m.AddRefreshToken(It.Is<RefreshToken>(r => r.token.Equals("newtoken"))), Times.Once
+                m => m.AddOrUpdateRefreshToken(It.Is<RefreshToken>(r => r.token.Equals("newtoken"))), Times.Once
             );
         }
 
@@ -116,7 +116,7 @@ namespace HwRemind.Tests.Controllers
             mockJWTService.Setup(m => m.GenerateRefreshToken(loginId))
             .ReturnsAsync(new RefreshToken() { token = "sometoken"});
 
-            mockRepo.Setup(m => m.GetLogin(login.email))
+            mockRepo.Setup(m => m.GetLoginByEmail(login.email))
             .ReturnsAsync(new Login
             {
                 id = 2,
@@ -126,7 +126,7 @@ namespace HwRemind.Tests.Controllers
             });
 
             mockRepo.Setup(m => m.GetRefreshToken(It.IsAny<int>()));
-            mockRepo.Setup(m => m.AddRefreshToken(It.IsAny<RefreshToken>()));
+            mockRepo.Setup(m => m.AddOrUpdateRefreshToken(It.IsAny<RefreshToken>()));
 
             mockPswdService.Setup(m => m.IsMatch(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(true);
@@ -134,7 +134,7 @@ namespace HwRemind.Tests.Controllers
 
             var authController = CreateAuthController(context);
 
-            var result = await authController.Authenticate(login, mockPswdService.Object);
+            var result = await authController.Login(login, mockPswdService.Object);
 
             var ok = result as OkObjectResult;
             Assert.NotNull(ok, "Ok result should not be null");
@@ -145,7 +145,7 @@ namespace HwRemind.Tests.Controllers
             Assert.NotNull(authReq.accesstoken, "Access token should be provided");
             Assert.NotNull(authReq.refreshToken, "Refresh token should be provided");
 
-            mockRepo.Verify(m => m.AddRefreshToken(It.IsAny<RefreshToken>()), Times.Once);
+            mockRepo.Verify(m => m.AddOrUpdateRefreshToken(It.IsAny<RefreshToken>()), Times.Once);
         }
         
         [Test]
@@ -163,12 +163,12 @@ namespace HwRemind.Tests.Controllers
             var context = new DefaultHttpContext();
                 context.Request.Headers["Authorization"] = "Bearer " + token;
 
-            mockRepo.Setup(m => m.GetLogin(login.email))
+            mockRepo.Setup(m => m.GetLoginByEmail(login.email))
             .ReturnsAsync(default(Login));
 
             var authController = CreateAuthController(context);
 
-            var result = await authController.Authenticate(login, mockPswdService.Object);
+            var result = await authController.Login(login, mockPswdService.Object);
             var http = result as StatusCodeResult;
 
             Assert.NotNull(http, "Result should return a Statuscode");
@@ -305,7 +305,7 @@ namespace HwRemind.Tests.Controllers
             mockRepo.Setup(m => m.GetRefreshToken(refreshRequest.refreshToken))
             .ReturnsAsync(existingToken);
 
-            mockRepo.Setup(m => m.AddRefreshToken(It.IsAny<RefreshToken>()));
+            mockRepo.Setup(m => m.AddOrUpdateRefreshToken(It.IsAny<RefreshToken>()));
 
             var authController = CreateAuthController(context);
 
@@ -323,7 +323,7 @@ namespace HwRemind.Tests.Controllers
 
             mockJWTService.Verify(m => m.IsExpiredAccessTokenValid(token), Times.Once);
             mockRepo.Verify(m => m.GetRefreshToken(refreshRequest.refreshToken), Times.Once);
-            mockRepo.Verify(m => m.AddRefreshToken(It.IsAny<RefreshToken>()), Times.Once);
+            mockRepo.Verify(m => m.AddOrUpdateRefreshToken(It.IsAny<RefreshToken>()), Times.Once);
 
         }
 
@@ -349,7 +349,7 @@ namespace HwRemind.Tests.Controllers
             mockJWTService.Setup(m => m.GenerateRefreshToken(loginId))
             .ReturnsAsync(new RefreshToken() { token = "sometoken" });
 
-            mockRepo.Setup(m => m.GetLogin(login.email))
+            mockRepo.Setup(m => m.GetLoginByEmail(login.email))
             .ReturnsAsync(new Login
             {
                 id = 2,
@@ -359,7 +359,7 @@ namespace HwRemind.Tests.Controllers
             });
 
             mockRepo.Setup(m => m.GetRefreshToken(It.IsAny<int>()));
-            mockRepo.Setup(m => m.AddRefreshToken(It.IsAny<RefreshToken>()));
+            mockRepo.Setup(m => m.AddOrUpdateRefreshToken(It.IsAny<RefreshToken>()));
 
             mockPswdService.Setup(m => m.IsMatch(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(false);
@@ -367,7 +367,7 @@ namespace HwRemind.Tests.Controllers
 
             var authController = CreateAuthController(context);
 
-            var result = await authController.Authenticate(login, mockPswdService.Object);
+            var result = await authController.Login(login, mockPswdService.Object);
             var http = result as StatusCodeResult;
 
             Assert.NotNull(http, "Result should return a Statuscode");

@@ -30,7 +30,7 @@ namespace HwRemind.Endpoints.Registration
 
         public async Task<IActionResult> Register([FromBody] BaseLogin login)
         {
-            var existingLogin = await _authRepo.GetLogin(login.email);
+            var existingLogin = await _authRepo.GetLoginByEmail(login.email);
 
             //If account already exists, user needs to login
             if(existingLogin != null) { return StatusCode(400); }
@@ -48,10 +48,10 @@ namespace HwRemind.Endpoints.Registration
 
             _logger.LogInformation("Added login for user with email: " + login.email);
 
-            var accessToken = await _jwtService.GenerateAccessToken(existingLogin.id);
-            var refreshToken = await _jwtService.GenerateRefreshToken(existingLogin.id);
+            var accessToken = await _jwtService.GenerateAccessToken(newLogin.id);
+            var refreshToken = await _jwtService.GenerateRefreshToken(newLogin.id);
 
-            await _authRepo.AddRefreshToken(refreshToken);
+            await _authRepo.AddOrUpdateRefreshToken(refreshToken);
 
             return Ok(new AuthenticationRequest { accesstoken = accessToken, refreshToken = refreshToken.token });
         }

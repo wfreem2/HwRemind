@@ -7,6 +7,15 @@
 
     public class BaseUser
     {
+        public BaseUser() { }
+        public BaseUser(User user)
+        {
+            id = user.id;
+            firstName = user.firstName;
+            lastName = user.lastName;
+            schoolName = user.schoolName;
+        }
+
         public int? id { get; set; }
         public string firstName { get; set; }
         public string lastName { get; set; }
