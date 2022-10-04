@@ -33,15 +33,15 @@ namespace HwRemind.Endpoints.Registration
             var existingLogin = await _authRepo.GetLoginByEmail(login.email);
 
             //If account already exists, user needs to login
-            if(existingLogin != null) { return StatusCode(400); }
+            if(existingLogin != null) { return BadRequest(); }
 
-            var hashSalt = _pswdService.HashPassword(login.password);
+            var hashWithSalt = _pswdService.HashPassword(login.password);
 
             var newLogin = new Login
             {
                 email = login.email,
-                password = hashSalt[0],
-                salt = hashSalt[1]
+                password = hashWithSalt[0],
+                salt = hashWithSalt[1]
             };
 
             await _authRepo.AddLogin(newLogin);

@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HwRemind.Api\HwRemind.Api.csproj" />
-    <ProjectReference Include="..\HwRemind.Authentication\HwRemind.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

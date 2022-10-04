@@ -1,9 +1,11 @@
-﻿using HwRemind.Api.Endpoints.Users.Repositories;
+﻿using HwRemind.Api.Configs;
+using HwRemind.Api.Endpoints.Users.Repositories;
 using HwRemind.API.Endpoints.Authentication.Services;
 using HwRemind.Endpoints.Authentication.Models;
 using HwRemind.Endpoints.Authentication.Repositories;
 using HwRemind.Endpoints.Authentication.Services;
 using HwRemind.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
@@ -38,7 +40,6 @@ namespace HwRemind.Endpoints.Authentication
         public async Task<IActionResult> Login([FromBody] BaseLogin login,
             [FromServices] IPasswordService pswdService)
         {
-            _logger.LogInformation("Generating JWT");
 
             var existingLogin = await _authRepo.GetLoginByEmail(login.email);
             if(existingLogin == null) { return BadRequest(); }
@@ -46,19 +47,18 @@ namespace HwRemind.Endpoints.Authentication
             var isPswdVerified = pswdService.IsMatch(login.password, existingLogin.hashedPassword, existingLogin.salt);
             if (!isPswdVerified) { return Unauthorized(); }
 
-            var existingUser = await _userRepo.GetUserByLoginId(existingLogin.id);
-
-            var accessToken =  existingUser == null ? 
-                await _jwtService.GenerateAccessToken(existingLogin.id) : 
-                await _jwtService.GenerateAccessToken(existingLogin.id, (int) existingUser.id);
-
+            //If there is an existing user generate token with login ID claim 
+            var accessToken = await _jwtService.GenerateAccessToken(existingLogin.id);
             var refreshToken = await _jwtService.GenerateRefreshToken(existingLogin.id);
 
             await _authRepo.AddOrUpdateRefreshToken(refreshToken);
 
+            _logger.LogInformation("Generating JWT");
+
             return Ok(new AuthenticationRequest { refreshToken = refreshToken.ToString(), accesstoken = accessToken });
         }
 
+        [Authorize(Policy = PolicyNames.LoginRequired)]
         [HttpPost, Route("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
         {
@@ -66,7 +66,7 @@ namespace HwRemind.Endpoints.Authentication
 
             //Must have an access token
             var oldToken = HttpContext.GetJWT();
-            if (string.IsNullOrEmpty(oldToken)) { return BadRequest(); }
+            //if (string.IsNullOrEmpty(oldToken)) { return BadRequest(); }
 
             //Must be a valid access token
             var isValid = await _jwtService.IsExpiredAccessTokenValid(oldToken);
@@ -81,6 +81,7 @@ namespace HwRemind.Endpoints.Authentication
             //Rotate refresh token
             var rotatedRefreshToken = await _jwtService.GenerateRefreshToken(existingRefreshToken.loginId);
 
+            //If the refresh request came from login with user, add userid and loginid claim else just loginid
             var accessToken = existingRefreshToken.userId == null ?
                 await _jwtService.GenerateAccessToken(existingRefreshToken.loginId) :
                 await _jwtService.GenerateAccessToken(existingRefreshToken.loginId, (int) existingRefreshToken.userId);
@@ -97,6 +98,7 @@ namespace HwRemind.Endpoints.Authentication
 
             SecurityToken token;
 
+            //Verify token isn't random junk
             var handler = new JwtSecurityTokenHandler();
                 handler.ValidateToken(revokeRequest.token, _jwtService.TokenValidationParams, out token);
 

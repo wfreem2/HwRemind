@@ -38,6 +38,19 @@ namespace HwRemind.Api.Endpoints.Users.Repositories
             return await _users.FindAsync(id);
         }
 
+        public async Task<User> GetUserByLoginEmail(string email)
+        {
+            return await 
+                (
+                 from u in _dbContext.Users
+                 join l in _dbContext.Logins on u.loginId equals l.id
+                 where l.email.Equals(email)
+                 select u
+                )
+                .FirstOrDefaultAsync();
+
+        }
+
         public async Task<User> GetUserByLoginId(int id)
         {
             return await _users.Where(u => u.loginId == id).FirstOrDefaultAsync();

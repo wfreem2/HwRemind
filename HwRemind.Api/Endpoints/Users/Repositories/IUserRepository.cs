@@ -8,6 +8,7 @@ namespace HwRemind.Api.Endpoints.Users.Repositories
         public Task<User> GetUserById(int id);
         public Task<User> GetUserByLoginId(int id);
 
+        public Task<User> GetUserByLoginEmail(string email);
         public Task AddUser(User user);
         public Task<bool> DeleteUser(int id);
         public Task<bool> UpdateUser(int id, User user);

@@ -23,10 +23,10 @@ namespace HwRemind
         {
             app.UseRouting();
             app.UseMiddleware<JWTRevokedMiddleware>();
+            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
             app.UseEndpoints(ep => ep.MapControllers() );
         }
