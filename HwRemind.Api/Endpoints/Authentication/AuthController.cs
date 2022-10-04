@@ -96,11 +96,28 @@ namespace HwRemind.Endpoints.Authentication
         {
             _logger.LogInformation("Revoking JWT");
 
+            if (string.IsNullOrEmpty(revokeRequest.token)) { return BadRequest();  }
+
+
             SecurityToken token;
 
-            //Verify token isn't random junk
-            var handler = new JwtSecurityTokenHandler();
-                handler.ValidateToken(revokeRequest.token, _jwtService.TokenValidationParams, out token);
+            try
+            {
+
+                //Verify token isn't random junk
+                var handler = new JwtSecurityTokenHandler();
+                    handler.ValidateToken(revokeRequest.token, _jwtService.TokenValidationParams, out token);
+            }
+            catch (SecurityTokenValidationException)
+            {
+                _logger.LogWarning("Unable to validate provided token" + revokeRequest.token);
+                return BadRequest();
+            }
+            catch (ArgumentException)
+            {
+                _logger.LogWarning("Unable to validate provided token" + revokeRequest.token);
+                return BadRequest();
+            }
 
             if (token == null) { return BadRequest(); }
 

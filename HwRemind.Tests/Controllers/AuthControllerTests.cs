@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using Microsoft.Extensions.Logging;
 using HwRemind.Endpoints.Authentication.Models;
+using HwRemind.Endpoints.Authentication.Services;
+using Microsoft.Extensions.Options;
+using HwRemind.Configs;
 
 namespace HwRemind.Tests.Controllers
 {
@@ -23,15 +26,10 @@ namespace HwRemind.Tests.Controllers
             setup();
 
             mockLogger = GetMockLogger<AuthController>();
-            refreshRequest = new RefreshRequest()
-            {
-                refreshToken = "token"
-            };
-            
         }
 
         [SetUp]
-        public void SetupLoggers()
+        public void SetupFields()
         {
             authController = CreateAuthController();
 
@@ -48,6 +46,11 @@ namespace HwRemind.Tests.Controllers
                 password = login.password,
                 hashedPassword = "hashed",
                 salt = "salted"
+            };
+
+            refreshRequest = new RefreshRequest()
+            {
+                refreshToken = "token"
             };
         }
 
@@ -192,6 +195,39 @@ namespace HwRemind.Tests.Controllers
             VerifyBadRequest(result);
         }
 
+
+        /* ############################## Revoke ############################## */
+
+        [Test]
+        public async Task Should_Return_400_With_Null_Token()
+        {
+            var revoke = new RevokeRequest
+            {
+                token = string.Empty
+            };
+
+            var result = await authController.Revoke(revoke);
+            VerifyBadRequest(result);
+        }
+
+        [Test]
+        [TestCase("")]
+        [TestCase("somejunk")]
+        [TestCase("90213091039012930")]
+        public async Task Should_Return_400_With_Invalid_Revoke_Token(string token)
+        {
+            var revoke = new RevokeRequest
+            {
+                token = token
+            };
+            var jwt = new JWTService(GetJWTConfigOptions()).TokenValidationParams;
+
+            mockJWTService.SetupGet(m => m.TokenValidationParams)
+            .Returns(jwt);
+
+            var result = await authController.Revoke(revoke);
+            VerifyBadRequest(result);
+        }
 
 
         private AuthController CreateAuthController(DefaultHttpContext context = null)

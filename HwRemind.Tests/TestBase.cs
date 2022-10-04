@@ -70,6 +70,23 @@ namespace HwRemind.Tests
             return options.Value;
         }
         
+        protected static IOptions<JWTConfig> GetJWTConfigOptions()
+        {
+            var config = new
+            ConfigurationBuilder()
+            .AddUserSecrets<JWTConfig>()
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appsettings.Development.json", optional: false)
+            .AddEnvironmentVariables()
+            .Build();
+
+            var jwt = config.GetSection("JWT").Get<JWTConfig>();
+
+            IOptions<JWTConfig> options = Options.Create(jwt);
+
+            return options;
+        }
+        
         protected void VerifyBadRequest(IActionResult result)
         {
             var http = result as StatusCodeResult;
