@@ -1,4 +1,5 @@
 ﻿using HwRemind.Api.Configs;
+using HwRemind.Api.Endpoints.Authentication.Filters;
 using HwRemind.Api.Endpoints.Users.Repositories;
 using HwRemind.API.Endpoints.Authentication.Services;
 using HwRemind.Endpoints.Authentication.Models;
@@ -7,6 +8,7 @@ using HwRemind.Endpoints.Authentication.Services;
 using HwRemind.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -59,19 +61,12 @@ namespace HwRemind.Endpoints.Authentication
             return Ok(new AuthenticationRequest { refreshToken = refreshToken.ToString(), accessToken = accessToken });
         }
 
-        //[Authorize(Policy = PolicyNames.LoginRequired)]
+
+        [ExpiredTokenWithLoginAtrribute]
         [HttpPost, Route("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
         {
             _logger.LogInformation("Refreshing JWT");
-
-            //Must have an access token
-            var oldToken = HttpContext.GetJWT();
-            //if (string.IsNullOrEmpty(oldToken)) { return BadRequest(); }
-
-            //Must be a valid access token
-            var isValid = await _jwtService.IsExpiredAccessTokenValid(oldToken);
-            if (!isValid) { return BadRequest(); }
 
             var existingRefreshToken = await _authRepo.GetRefreshToken(token: refreshRequest.refreshToken);
 
@@ -134,4 +129,6 @@ namespace HwRemind.Endpoints.Authentication
         }
 
     }
+
+    
 }

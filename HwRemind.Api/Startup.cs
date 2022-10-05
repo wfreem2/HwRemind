@@ -1,5 +1,6 @@
 using HwRemind.Api.Configs;
 using HwRemind.Api.Endpoints.Assignments.Repositories;
+using HwRemind.Api.Endpoints.Authentication.Filters;
 using HwRemind.Api.Endpoints.Users.Repositories;
 using HwRemind.Api.Gloabl_Services;
 using HwRemind.API.Endpoints.Authentication.Services;
@@ -60,6 +61,7 @@ namespace HwRemind
 
             services.AddSingleton<IJWTService, JWTService>();
             services.AddSingleton<IPasswordService, PasswordService>();
+            services.AddSingleton<ExpiredTokenWithLoginFilter>();
 
             services.AddTransient<IAuthRepository, AuthRepository>();
             services.AddTransient<IUserRepository, UserRepository>();
