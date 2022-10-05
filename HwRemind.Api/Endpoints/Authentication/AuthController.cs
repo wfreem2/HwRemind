@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 namespace HwRemind.Endpoints.Authentication
@@ -55,10 +56,10 @@ namespace HwRemind.Endpoints.Authentication
 
             _logger.LogInformation("Generating JWT");
 
-            return Ok(new AuthenticationRequest { refreshToken = refreshToken.ToString(), accesstoken = accessToken });
+            return Ok(new AuthenticationRequest { refreshToken = refreshToken.ToString(), accessToken = accessToken });
         }
 
-        [Authorize(Policy = PolicyNames.LoginRequired)]
+        //[Authorize(Policy = PolicyNames.LoginRequired)]
         [HttpPost, Route("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
         {
@@ -88,7 +89,7 @@ namespace HwRemind.Endpoints.Authentication
 
             await _authRepo.AddOrUpdateRefreshToken(rotatedRefreshToken);
             
-            return Ok(new AuthenticationRequest { accesstoken = accessToken, refreshToken = rotatedRefreshToken.ToString() });
+            return Ok(new AuthenticationRequest { accessToken = accessToken, refreshToken = rotatedRefreshToken.ToString() });
         }
 
         [HttpPost, Route("revoke")]
@@ -98,28 +99,22 @@ namespace HwRemind.Endpoints.Authentication
 
             if (string.IsNullOrEmpty(revokeRequest.token)) { return BadRequest();  }
 
+            var types = new string[] { "id" };
+
+            var tokenParams = _jwtService.TokenValidationParams;
+                tokenParams.ValidateLifetime = true;
+
+            var isValid = await _jwtService.ValidateToken(revokeRequest.token, tokenParams, types);
+
+            if (!isValid)
+            {
+                _logger.LogWarning($"Unable to validate provided token" + revokeRequest.token);
+                return BadRequest();
+            }
 
             SecurityToken token;
-
-            try
-            {
-
-                //Verify token isn't random junk
-                var handler = new JwtSecurityTokenHandler();
-                    handler.ValidateToken(revokeRequest.token, _jwtService.TokenValidationParams, out token);
-            }
-            catch (SecurityTokenValidationException)
-            {
-                _logger.LogWarning("Unable to validate provided token" + revokeRequest.token);
-                return BadRequest();
-            }
-            catch (ArgumentException)
-            {
-                _logger.LogWarning("Unable to validate provided token" + revokeRequest.token);
-                return BadRequest();
-            }
-
-            if (token == null) { return BadRequest(); }
+            var handler = new JwtSecurityTokenHandler();
+            token = handler.ReadJwtToken(revokeRequest.token);
 
             await _cache.SetAsync(
                 key: revokeRequest.token, 

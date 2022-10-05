@@ -5,8 +5,6 @@ using Moq;
 using Microsoft.Extensions.Logging;
 using HwRemind.Endpoints.Authentication.Models;
 using HwRemind.Endpoints.Authentication.Services;
-using Microsoft.Extensions.Options;
-using HwRemind.Configs;
 
 namespace HwRemind.Tests.Controllers
 {
@@ -54,11 +52,11 @@ namespace HwRemind.Tests.Controllers
             };
         }
 
-        /*[TearDown]
+        [TearDown]
         public void TearDown()
         {
             //Loggers should be logging information at least once
-            mockLogger.Verify(m => 
+            mockLogger.Verify(m =>
             m.Log(
                 It.IsAny<LogLevel>(),
                 It.IsAny<EventId>(),
@@ -66,8 +64,8 @@ namespace HwRemind.Tests.Controllers
                 It.IsAny<Exception>(),
                 (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()
             ),
-            Times.Once);
-        }*/
+            Times.AtLeastOnce);
+        }
 
         /* ############################## Login ############################## */
         [Test]
@@ -96,15 +94,7 @@ namespace HwRemind.Tests.Controllers
 
 
             var result = await authController.Login(login, mockPswdService.Object);
-            var ok = result as OkObjectResult;
-
-            Assert.NotNull(ok, "Ok result should not be null");
-
-            var authReq = ok.Value as AuthenticationRequest;
-
-            Assert.NotNull(authReq, "Authentication request was null");
-            Assert.NotNull(authReq.accesstoken, "Access token should be provided");
-            Assert.NotNull(authReq.refreshToken, "Refresh token should be provided");
+           VerifyAuthRequest(result);
 
             mockAuthRepo.Verify(
                 m => m.AddOrUpdateRefreshToken(It.Is<RefreshToken>(r => r.token.Equals(""))),

@@ -44,7 +44,7 @@ namespace HwRemind.Endpoints.Registration
                 salt = hashWithSalt[1]
             };
 
-            await _authRepo.AddLogin(newLogin);
+            newLogin = await _authRepo.AddLogin(newLogin);
 
             _logger.LogInformation("Added login for user with email: " + login.email);
 
@@ -53,7 +53,7 @@ namespace HwRemind.Endpoints.Registration
 
             await _authRepo.AddOrUpdateRefreshToken(refreshToken);
 
-            return Ok(new AuthenticationRequest { accesstoken = accessToken, refreshToken = refreshToken.token });
+            return Ok(new AuthenticationRequest { accessToken = accessToken, refreshToken = refreshToken.token });
         }
 
 

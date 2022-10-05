@@ -7,20 +7,23 @@
 	},
 	"item": [
 		{
-			"name": "Registration",
+			"name": "Registration Flows",
 			"item": [
 				{
-					"name": "Register",
+					"name": "Register_HappyPath",
 					"event": [
 						{
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"var email = pm.variables.replaceIn(\"{{$randomEmail}}\")\r",
-									"var pswd = pm.variables.replaceIn(\"{{$randomPassword}}\")\r",
 									"\r",
-									"pm.collectionVariables.set(\"randomEmail\", email)\r",
-									"pm.collectionVariables.set(\"randomPassword\", pswd)"
+									"const email = pm.variables.replaceIn('{{$randomEmail}}')\r",
+									"const pswd = pm.variables.replaceIn('{{$randomPassword}}')\r",
+									"\r",
+									"\r",
+									"pm.collectionVariables.set(\"email\", email);\r",
+									"pm.collectionVariables.set(\"pswd\", pswd);\r",
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -31,7 +34,20 @@
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {\r",
 									"    pm.response.to.have.status(200);\r",
-									"});"
+									"});\r",
+									"\r",
+									"const json = pm.response.json()\r",
+									"\r",
+									"pm.test(\"Validate Access Token Included\", function(){\r",
+									"    pm.expect(json).to.have.property('accessToken')\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Validate Access Token Included\", function(){\r",
+									"    pm.expect(json).to.have.property('refreshToken')\r",
+									"})\r",
+									"\r",
+									"pm.collectionVariables.set(\"accessToken\", json.accessToken)\r",
+									"pm.collectionVariables.set(\"refreshToken\", json.refreshToken)"
 								],
 								"type": "text/javascript"
 							}
@@ -42,7 +58,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"{{randomEmail}}\",\r\n    \"password\": \"{{randomPassword}}\"\r\n}",
+							"raw": "{\r\n    \"email\": \"{{email}}\",\r\n    \"password\": \"{{pswd}}\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -60,138 +76,9 @@
 						}
 					},
 					"response": []
-				}
-			]
-		},
-		{
-			"name": "Authentication",
-			"item": [
-				{
-					"name": "Authenticate",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var res = pm.response.json();\r",
-									"\r",
-									"pm.collectionVariables.set(\"token\", res.accesstoken);\r",
-									"pm.collectionVariables.set(\"refreshToken\", res.refreshToken);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"{{randomEmail}}\",\r\n    \"password\": \"{{randomPassword}}\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/authenticate",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"authenticate"
-							]
-						}
-					},
-					"response": []
 				},
 				{
-					"name": "Refresh Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var res = pm.response.json();\r",
-									"\r",
-									"pm.collectionVariables.set(\"token\", res.accesstoken);\r",
-									"pm.collectionVariables.set(\"refreshToken\", res.refreshToken);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"refreshToken\": \"{{refreshToken}}\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/authenticate/refresh",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"authenticate",
-								"refresh"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Revoke Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {\r",
-									"    pm.response.to.have.status(200);\r",
-									"});\r",
-									"\r",
-									"// pm.collectionVariables.set(\"token\", \"\");\r",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"token\": \"{{token}}\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{url}}/authenticate/revoke",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"authenticate",
-								"revoke"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Bad Authetication - 400",
+					"name": "Register_Bad_Body_Format",
 					"event": [
 						{
 							"listen": "test",
@@ -218,53 +105,38 @@
 							}
 						},
 						"url": {
-							"raw": "{{url}}/authenticate",
+							"raw": "{{url}}/register",
 							"host": [
 								"{{url}}"
 							],
 							"path": [
-								"authenticate"
+								"register"
 							]
 						}
 					},
 					"response": []
-				}
-			]
-		},
-		{
-			"name": "Assignments",
-			"item": [
+				},
 				{
-					"name": "Add Assignment",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/assignments/add",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"assignments",
-								"add"
-							]
+					"name": "Register_Existing_Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "Add User",
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"firstName\": \"Will\",\r\n    \"lastName\": \"free\",\r\n    \"schoolName\": \"TU\"\r\n}",
+							"raw": "{\r\n    \"email\": \"{{email}}\",\r\n    \"password\": \"{{pswd}}\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -272,34 +144,361 @@
 							}
 						},
 						"url": {
-							"raw": "{{url}}/users/add",
+							"raw": "{{url}}/register",
 							"host": [
 								"{{url}}"
 							],
 							"path": [
-								"users",
-								"add"
+								"register"
 							]
 						}
 					},
 					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication Flows",
+			"item": [
+				{
+					"name": "Login",
+					"item": [
+						{
+							"name": "Login_HappyPath",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json()\r",
+											"\r",
+											"pm.test(\"Validate Access Token Included\", function(){\r",
+											"    pm.expect(json).to.have.property('accessToken')\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Validate Access Token Included\", function(){\r",
+											"    pm.expect(json).to.have.property('refreshToken')\r",
+											"})\r",
+											"\r",
+											"pm.collectionVariables.set(\"accessToken\", json.accessToken)\r",
+											"pm.collectionVariables.set(\"refreshToken\", json.refreshToken)"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"{{email}}\",\r\n    \"password\": \"{{pswd}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/authenticate",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login_WrongPswd",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {\r",
+											"    pm.response.to.have.status(401);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"{{email}}\",\r\n    \"password\": \"{{pswd}}nothterightpswd\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/authenticate",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login_NonExistent_Email",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {\r",
+											"    pm.response.to.have.status(400);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"{{email}}nottherightemail\",\r\n    \"password\": \"{{pswd}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/authenticate",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				},
 				{
-					"name": "Update User",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/users",
-							"host": [
-								"{{url}}"
+					"name": "Refresh",
+					"item": [
+						{
+							"name": "Refresh_HappyPath",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json()\r",
+											"\r",
+											"pm.test(\"Validate Access Token Included\", function(){\r",
+											"    pm.expect(json).to.have.property('accessToken')\r",
+											"})\r",
+											"\r",
+											"pm.test(\"Validate Access Token Included\", function(){\r",
+											"    pm.expect(json).to.have.property('refreshToken')\r",
+											"})\r",
+											"\r",
+											"pm.collectionVariables.set(\"accessToken\", json.accessToken)\r",
+											"pm.collectionVariables.set(\"refreshToken\", json.refreshToken)"
+										],
+										"type": "text/javascript"
+									}
+								}
 							],
-							"path": [
-								"users"
-							]
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{expiredAccessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"refreshToken\": \"{{refreshToken}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/authenticate/refresh",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"authenticate",
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Refresh_Token_Not_Exist",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {\r",
+											"    pm.response.to.have.status(400);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{expiredAccessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"refreshToken\": \"{{refreshToken}}doesnotexist\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/authenticate/refresh",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"authenticate",
+										"refresh"
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
+				},
+				{
+					"name": "Revoke",
+					"item": [
+						{
+							"name": "Revoke_HappyPath",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {\r",
+											"    pm.response.to.have.status(204);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"token\": \"{{accessToken}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/authenticate/revoke",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"authenticate",
+										"revoke"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Revoke_Expired_Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {\r",
+											"    pm.response.to.have.status(400);\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{expiredAccessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"token\": \"{{expiredAccessToken}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/authenticate/revoke",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"authenticate",
+										"revoke"
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		}
@@ -309,7 +508,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "{{token}}",
+				"value": "{{accessToken}}",
 				"type": "string"
 			}
 		]
@@ -336,14 +535,8 @@
 	],
 	"variable": [
 		{
-			"key": "email",
-			"value": "email@gmail.com",
-			"type": "string"
-		},
-		{
-			"key": "token",
-			"value": "",
-			"type": "string"
+			"key": "accessToken",
+			"value": ""
 		},
 		{
 			"key": "refreshToken",
@@ -351,12 +544,17 @@
 			"type": "string"
 		},
 		{
-			"key": "randomPassword",
+			"key": "expiredAccessToken",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUiLCJpYXQiOiIxNjY0OTg1MzE0IiwiZXhwIjoxNjY0OTg1NDk0LCJpc3MiOiJod3JlbWluZCIsImF1ZCI6ImxvY2FsaG9zdCJ9.6pHc8wlxr6rYD9GzNL1V31MFTrddsHuq1KoT4ht1Ros",
+			"type": "string"
+		},
+		{
+			"key": "email",
 			"value": "",
 			"type": "string"
 		},
 		{
-			"key": "randomEmail",
+			"key": "pswd",
 			"value": "",
 			"type": "string"
 		}

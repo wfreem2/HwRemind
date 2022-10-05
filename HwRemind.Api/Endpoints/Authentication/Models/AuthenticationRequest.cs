@@ -4,7 +4,7 @@ namespace HwRemind.Endpoints.Authentication.Models
 {
     public class AuthenticationRequest
     {
-        public string accesstoken { get; set; }
+        public string accessToken { get; set; }
         [Required]
         public string refreshToken { get; set; }    
     }

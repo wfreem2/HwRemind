@@ -74,9 +74,11 @@ namespace HwRemind.Endpoints.Authentication.Repositories
                 )
                 .FirstOrDefaultAsync();
 
-            var user = await _users.Where(u => u.loginId == refreshToken.loginId).FirstOrDefaultAsync();
-
-            if(user != null) { refreshToken.userId = user.id; }
+            if(refreshToken != null)
+            {
+                var user = await _users.Where(u => u.loginId == refreshToken.loginId).FirstOrDefaultAsync();
+                if(user != null) { refreshToken.userId = user.id; }
+            }
 
             return refreshToken;
         } 

@@ -84,9 +84,17 @@ namespace HwRemind.Endpoints.Authentication.Services
                 SecurityToken validToken = null;
 
                 var validationParams = TokenValidationParams;
-                _tokenHandler.ValidateToken(token, validationParams, out validToken);
+                var claims = _tokenHandler.ValidateToken(token, validationParams, out validToken);
 
-                return Task.FromResult(validToken != null);
+                if(validToken != null)
+                {
+
+                    var claim = claims.Claims.Where(c => c.Type.Equals("id")).FirstOrDefault();
+
+                    return Task.FromResult(claim != null);
+                }
+
+                return Task.FromResult(false);
             }
             catch (Exception)
             {
@@ -108,7 +116,38 @@ namespace HwRemind.Endpoints.Authentication.Services
         private SigningCredentials GetSigningCredentials() => new SigningCredentials(GetSignature(), _jwtConfig.alg);
         private SymmetricSecurityKey GetSignature() => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.secret));
 
-     
+        public Task<bool> ValidateToken(string token, TokenValidationParameters validationParams = null, IEnumerable<string> claimTypes = null)
+        {
+            if(validationParams == null) { validationParams = TokenValidationParams; }
+            if(claimTypes == null) { claimTypes = Enumerable.Empty<string>(); }
+
+            try
+            {
+                SecurityToken validToken = null;
+
+                var principal = _tokenHandler.ValidateToken(token, validationParams, out validToken);
+
+                //Check if all the required claims are present
+                foreach(string claim in claimTypes)
+                {
+                    if (!principal.Claims.Any(c => c.Type.Equals(claim)))
+                    {
+                        return Task.FromResult(false);
+                    } 
+                }
+
+                return Task.FromResult(validToken != null);
+            }
+            catch (SecurityTokenException)
+            {
+                return Task.FromResult(false);
+            }
+            catch (Exception)
+            {
+                return Task.FromResult(false);
+            }
+        }
+
         public TokenValidationParameters TokenValidationParams
         {
             get

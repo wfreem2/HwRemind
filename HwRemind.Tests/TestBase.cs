@@ -2,6 +2,7 @@
 using HwRemind.API.Endpoints.Authentication.Services;
 using HwRemind.Configs;
 using HwRemind.Endpoints.Authentication;
+using HwRemind.Endpoints.Authentication.Models;
 using HwRemind.Endpoints.Authentication.Repositories;
 using HwRemind.Endpoints.Authentication.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -95,6 +96,18 @@ namespace HwRemind.Tests
             Assert.True(http.StatusCode == 400, "Status code should be 400");
         }
 
+        protected void VerifyAuthRequest(IActionResult result)
+        {
+            var ok = result as OkObjectResult;
+
+            Assert.NotNull(ok, "Ok result should not be null");
+
+            var authReq = ok.Value as AuthenticationRequest;
+
+            Assert.NotNull(authReq, "Authentication request was null");
+            Assert.NotNull(authReq.accessToken, "Access token should be provided");
+            Assert.NotNull(authReq.refreshToken, "Refresh token should be provided");
+        }
 
         protected static Mock<ILogger<T>> GetMockLogger<T>()
         {
