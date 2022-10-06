@@ -28,7 +28,7 @@ namespace HwRemind.Api.Endpoints.Assignments
         public async Task<IActionResult> GetAssignments([FromQuery] PageFilter filter, 
             [FromServices] IUriService uriService)
         {
-            var userId = HttpContext.GetUserIdFromClaim();
+            var userId = HttpContext.GetUserId();
 
             _logger.LogInformation($"Getting assignments from user: {userId}");
 
@@ -64,7 +64,7 @@ namespace HwRemind.Api.Endpoints.Assignments
         {
             _logger.LogInformation($"Deleting assignment: {id}");
 
-            var userId = HttpContext.GetUserIdFromClaim();
+            var userId = HttpContext.GetUserId();
             var isDeleted = await _assignmentRepo.DeleteAssignment(id, userId);
 
             _logger.LogInformation($"Assignment deletion successful: {isDeleted}");

@@ -24,7 +24,7 @@ namespace HwRemind.Api.Endpoints.Users.Repositories
 
         public async Task<bool> DeleteUser(int id)
         {
-            var user = await _users.FindAsync(id);
+            var user = await GetUserByLoginId(id);
             if(user == null) { return false; }
 
             _users.Remove(user);
@@ -58,7 +58,7 @@ namespace HwRemind.Api.Endpoints.Users.Repositories
 
         public async Task<bool> UpdateUser(int id, User user)
         {
-            var existingUser = await _users.FindAsync(id);
+            var existingUser = await GetUserByLoginId(id);
             if(existingUser == null) { return false; }
 
             existingUser.firstName = user.firstName;
@@ -72,7 +72,7 @@ namespace HwRemind.Api.Endpoints.Users.Repositories
 
         public async Task<bool> UpdateUser(int id, JsonPatchDocument<User> user)
         {
-            var existingUser = await _users.FindAsync(id);
+            var existingUser = await GetUserByLoginId(id);
             if (existingUser == null) { return false; }
 
             user.ApplyTo(existingUser);

@@ -25,18 +25,16 @@ namespace HwRemind.Endpoints.Authentication
         private readonly ILogger<AuthController> _logger;
         private readonly IJWTService _jwtService;
         private readonly IAuthRepository _authRepo;
-        private readonly IUserRepository _userRepo;
         private readonly IDistributedCache _cache;
 
 
         public AuthController(ILogger<AuthController> logger, IJWTService JWTService, IAuthRepository authRepository, 
-            IUserRepository userRepository, IDistributedCache cache)
+            IDistributedCache cache)
         {
             _cache = cache;
             _logger = logger;
             _jwtService = JWTService;
             _authRepo = authRepository;
-            _userRepo = userRepository;
         }
 
         [HttpPost, Route("")]
@@ -58,7 +56,7 @@ namespace HwRemind.Endpoints.Authentication
 
             _logger.LogInformation("Generating JWT");
 
-            return Ok(new AuthenticationRequest { refreshToken = refreshToken.ToString(), accessToken = accessToken });
+            return Ok(new AuthenticationRequest { accessToken = accessToken, refreshToken = refreshToken.ToString() });
         }
 
 
@@ -68,6 +66,7 @@ namespace HwRemind.Endpoints.Authentication
         {
             _logger.LogInformation("Refreshing JWT");
 
+            var loginId = HttpContext.GetLoginId();
             var existingRefreshToken = await _authRepo.GetRefreshToken(token: refreshRequest.refreshToken);
 
             //If refresh token is expired or the token does not exist, client needs to login
@@ -75,13 +74,10 @@ namespace HwRemind.Endpoints.Authentication
             { return BadRequest(); }
 
             //Rotate refresh token
-            var rotatedRefreshToken = await _jwtService.GenerateRefreshToken(existingRefreshToken.loginId);
+            var rotatedRefreshToken = await _jwtService.GenerateRefreshToken(loginId);
+            var accessToken = await _jwtService.GenerateAccessToken(loginId);
 
-            //If the refresh request came from login with user, add userid and loginid claim else just loginid
-            var accessToken = existingRefreshToken.userId == null ?
-                await _jwtService.GenerateAccessToken(existingRefreshToken.loginId) :
-                await _jwtService.GenerateAccessToken(existingRefreshToken.loginId, (int) existingRefreshToken.userId);
-
+          
             await _authRepo.AddOrUpdateRefreshToken(rotatedRefreshToken);
             
             return Ok(new AuthenticationRequest { accessToken = accessToken, refreshToken = rotatedRefreshToken.ToString() });

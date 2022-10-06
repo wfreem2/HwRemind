@@ -135,7 +135,7 @@ namespace HwRemind.Tests.Controllers
 
 
         /* ############################## Refresh ############################## */
-        [Test]
+       /* [Test]
         public async Task Should_Return_400_With_Invalid_Token()
         {
             mockJWTService.Setup(m => m.IsExpiredAccessTokenValid(It.IsAny<string>()))
@@ -183,7 +183,7 @@ namespace HwRemind.Tests.Controllers
 
             var result = await authController.Refresh(refreshRequest);
             VerifyBadRequest(result);
-        }
+        }*/
 
 
         /* ############################## Revoke ############################## */

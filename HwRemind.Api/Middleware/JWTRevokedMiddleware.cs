@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using HwRemind.Extensions;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace HwRemind.Middleware
 {
@@ -15,9 +16,8 @@ namespace HwRemind.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var raw = context.Request.Headers["Authorization"].ToString();
-            var token = raw.Split(' ').LastOrDefault();
-
+            var token = context.GetJWT();
+            
             var isRevoked = !string.IsNullOrEmpty(await _cache.GetStringAsync(token));
 
             if (isRevoked)

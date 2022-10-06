@@ -19,7 +19,7 @@ namespace HwRemind.Tests.Services
         {
             jwtConfig = GetJWTConfig();
 
-            jwtService = new JWTService(Options.Create(jwtConfig));
+            jwtService = new JWTService(GetJWTConfigOptions());
         }
 
         [Test]

@@ -22,23 +22,13 @@ namespace HwRemind.Api.Endpoints.Users
             _userRepository = userRepository;
         }
 
-        [Authorize(Policy = PolicyNames.UserAndLoginRequired)]
-        [HttpGet, Route("me")]
-        public async Task<IActionResult> GetUser()
-        {
-            var loginId = HttpContext.GetLoginIdFromClaim();
-
-            var user = await _userRepository.GetUserByLoginId(loginId);
-
-            return user != null ? Ok(new BaseUser(user)) : NotFound();
-        }
 
         [HttpPost, Route("add")]
         public async Task<IActionResult> AddUser([FromBody] User user)
         {
             _logger.LogInformation($"Adding user {user.firstName}");
 
-            var loginId = HttpContext.GetLoginIdFromClaim();
+            var loginId = HttpContext.GetLoginId();
 
             var existingUser = await _userRepository.GetUserByLoginId(loginId);
             if (existingUser != null) { return BadRequest(); }
@@ -51,45 +41,53 @@ namespace HwRemind.Api.Endpoints.Users
         }
 
 
-        [Authorize(Policy = PolicyNames.UserAndLoginRequired)]
+        [HttpGet, Route("me")]
+        public async Task<IActionResult> GetUser()
+        {
+            var loginId = HttpContext.GetLoginId();
+
+            var user = await _userRepository.GetUserByLoginId(loginId);
+
+            return user != null ? Ok(new BaseUser(user)) : NotFound();
+        }
+
+
         [HttpDelete, Route("")]
         public async Task<IActionResult> DeleteUser()
         {
-            var userId = HttpContext.GetUserIdFromClaim();
+            var loginId = HttpContext.GetLoginId();
 
-            _logger.LogInformation($"Deleting user: {userId}");
+            _logger.LogInformation($"Deleting user wit loginId: {loginId}");
 
-            var isDeleted = await _userRepository.DeleteUser(userId);
+            var isDeleted = await _userRepository.DeleteUser(loginId);
 
             _logger.LogInformation($"User deletion successful: {isDeleted}");
 
             return NoContent();
         }
 
-        [Authorize(Policy = PolicyNames.UserAndLoginRequired)]
         [HttpPut, Route("")]
         public async Task<IActionResult> UpdateUser([FromBody] User updatedUser)
         {
-            var userId = HttpContext.GetUserIdFromClaim();
+            var loginId = HttpContext.GetLoginId();
 
-            _logger.LogInformation($"Updating user: {userId}");
+            _logger.LogInformation($"Updating user with loginId: {loginId}");
 
-            var isUpdated = await _userRepository.UpdateUser(userId, updatedUser);
+            var isUpdated = await _userRepository.UpdateUser(loginId, updatedUser);
 
             _logger.LogInformation($"User update successful: {isUpdated}");
 
             return NoContent();
         }
 
-        [Authorize(Policy = PolicyNames.UserAndLoginRequired)]
         [HttpPatch, Route("")]
         public async Task<IActionResult> UpdateUser([FromBody] JsonPatchDocument<User> updatedUser)
         {
-            var userId = HttpContext.GetUserIdFromClaim();
+            var loginId = HttpContext.GetLoginId();
 
-            _logger.LogInformation($"Patching user: {userId}");
+            _logger.LogInformation($"Patching user with loginId: {loginId}");
 
-            var isUpdated = await _userRepository.UpdateUser(userId, updatedUser);
+            var isUpdated = await _userRepository.UpdateUser(loginId, updatedUser);
 
             _logger.LogInformation($"User patch successful: {isUpdated}");
 

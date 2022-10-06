@@ -6,6 +6,7 @@ namespace HwRemind.Extensions
     public static class HttpContextExtensions
     {
         private static JwtSecurityTokenHandler _tokenHandler = new JwtSecurityTokenHandler();
+        
         public static string GetJWT(this HttpContext context)
         {
             var token = context.Request.Headers["Authorization"].ToString();
@@ -16,26 +17,34 @@ namespace HwRemind.Extensions
         public static IEnumerable<Claim> GetClaims(this HttpContext context)
         {
             var token = GetJWT(context);
+            
+            if (string.IsNullOrEmpty(token)) { return Enumerable.Empty<Claim>(); }
+
             var decoded = _tokenHandler.ReadJwtToken(token);
 
             return decoded.Claims;
         }
 
-        public static int GetLoginIdFromClaim(this HttpContext context)
+        public static int GetLoginId(this HttpContext context)
         {
-            var claims = GetClaims(context);
-            var loginId = claims.Where(c => c.Type.Equals("id")).FirstOrDefault();
-
-            return int.Parse(loginId.Value);
+            return getClaim("id", context);
         }
 
-        public static int GetUserIdFromClaim(this HttpContext context)
+        public static int GetUserId(this HttpContext context)
         {
-            var claims = GetClaims(context);
-            var userId = claims.Where(c => c.Type.Equals("userId")).FirstOrDefault();
-
-            return int.Parse(userId.Value);
+            return getClaim("userId", context);
         }
 
+        private static int getClaim(string claimType, HttpContext context)
+        {
+            var claims = GetClaims(context);
+            var claim = claims.Where(c => c.Type.Equals(claimType)).FirstOrDefault();
+
+            int value = -1;
+
+            int.TryParse(claim.Value, out value);
+
+            return value;
+        }
     }
 }

@@ -45,7 +45,14 @@ namespace HwRemind.Endpoints.Authentication.Services
             return await generateAccessToken(claims);
         }
 
-        private Task<string> generateAccessToken(Claim[] claims)
+        public async Task<string> GenerateAccessToken(IEnumerable<Claim> claims)
+        {
+            var newClaims = claims.Append(new Claim(JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime().ToString()));
+
+            return await generateAccessToken(newClaims);
+        }
+
+        private Task<string> generateAccessToken(IEnumerable<Claim> claims)
         {
             var credentials = GetSigningCredentials();
 
@@ -116,6 +123,13 @@ namespace HwRemind.Endpoints.Authentication.Services
         private SigningCredentials GetSigningCredentials() => new SigningCredentials(GetSignature(), _jwtConfig.alg);
         private SymmetricSecurityKey GetSignature() => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.secret));
 
+        /// <summary>
+        /// Validates the provided JWT token. The default params do not validate the lifetime
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="validationParams"></param>
+        /// <param name="claimTypes"></param>
+        /// <returns></returns>
         public Task<bool> ValidateToken(string token, TokenValidationParameters validationParams = null, IEnumerable<string> claimTypes = null)
         {
             if(validationParams == null) { validationParams = TokenValidationParams; }
@@ -147,6 +161,7 @@ namespace HwRemind.Endpoints.Authentication.Services
                 return Task.FromResult(false);
             }
         }
+
 
         public TokenValidationParameters TokenValidationParams
         {
