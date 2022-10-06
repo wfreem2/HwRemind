@@ -695,6 +695,118 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Assignment Flows",
+			"item": [
+				{
+					"name": "Get_My_Assignments_HappyPath",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/assignments/me",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"assignments",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add_Assignment_HappyPath",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json()\r",
+									"\r",
+									"pm.test(\"Assignment Id Included\", function(){\r",
+									"    pm.expect(json).to.have.property('id')\r",
+									"})\r",
+									"\r",
+									"\r",
+									"pm.collectionVariables.set(\"assignmentId\", json.id)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{$randomFileName}}\",\r\n    \"description\": \"{{$randomJobDescriptor}}\",\r\n    \"dueAt\": \"{{$isoTimestamp}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/assignments/add",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"assignments",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add_Assignment_HappyPath Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/assignments/{{assignmentId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"assignments",
+								"{{assignmentId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"auth": {
@@ -754,6 +866,11 @@
 		},
 		{
 			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "assignmentId",
 			"value": "",
 			"type": "string"
 		}
