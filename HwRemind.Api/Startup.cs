@@ -23,8 +23,8 @@ namespace HwRemind
         public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseRouting();
+            app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); //Needs to come before all middleware
             app.UseMiddleware<JWTRevokedMiddleware>();
-            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
 

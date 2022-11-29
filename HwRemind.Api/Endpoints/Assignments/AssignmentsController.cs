@@ -34,7 +34,8 @@ namespace HwRemind.Api.Endpoints.Assignments
             var loginId = HttpContext.GetLoginId();
             var user = await _userRepo.GetUserByLoginId(loginId);
 
-            if(user == null) { return BadRequest(); }
+            //Verify user exists
+            if (user == null) { return BadRequest(); }
 
             _logger.LogInformation($"Getting assignments from user: {user.id}");
 
@@ -58,7 +59,8 @@ namespace HwRemind.Api.Endpoints.Assignments
         {
             var loginId = HttpContext.GetLoginId();
             var user = await _userRepo.GetUserByLoginId(loginId);
-            
+
+            //Verify user exists
             if (user == null) { return BadRequest(); }
 
             assignment.userId = user.id;
@@ -78,9 +80,10 @@ namespace HwRemind.Api.Endpoints.Assignments
             var loginId = HttpContext.GetLoginId();
             var user = await _userRepo.GetUserByLoginId(loginId);
 
+            //Verify user exists
             if (user == null) { return BadRequest(); }
 
-            var isDeleted = await _assignmentRepo.DeleteAssignment(id, user.id);
+            var isDeleted = await _assignmentRepo.DeleteAssignment(id);
 
             _logger.LogInformation($"Assignment deletion successful: {isDeleted}");
 

@@ -24,9 +24,9 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAssignment(int id, int userId)
+        public async Task<bool> DeleteAssignment(int id)
         {
-            var assignment = await _assignments.Where(a => a.userId == userId).FirstOrDefaultAsync();
+            var assignment = await _assignments.Where(a => a.id == id).FirstOrDefaultAsync();
             if(assignment == null) { return false; }
 
             _assignments.Remove(assignment);
@@ -58,8 +58,8 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
             var existingAssignment = await _assignments.FindAsync(id);
             if(existingAssignment == null) { return false; }
 
-            existingAssignment.description = assignment.description;
             existingAssignment.name = assignment.name;
+            existingAssignment.description = assignment.description;
             existingAssignment.dueAt = assignment.dueAt;
 
             await _dbContext.SaveChangesAsync();

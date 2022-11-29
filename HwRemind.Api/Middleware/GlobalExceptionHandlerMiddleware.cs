@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace HwRemind.Middleware
 {
@@ -8,14 +9,11 @@ namespace HwRemind.Middleware
     public class GlobalExceptionHandlerMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger _logger;
 
-        public GlobalExceptionHandlerMiddleware(RequestDelegate next, IServiceProvider serviceProvider, 
-            ILogger<GlobalExceptionHandlerMiddleware> logger)
+        public GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlerMiddleware> logger)
         {
             _next = next;
-            _serviceProvider = serviceProvider;
             _logger = logger;
         }
 
@@ -30,7 +28,12 @@ namespace HwRemind.Middleware
                 _logger.LogError("An error occured updating the database " + e.Message);
                 context.Response.StatusCode = 500;
             }
-            catch(Exception e)
+            catch (RedisConnectionException)
+            {
+                _logger.LogError("Redis cache offline");
+                context.Response.StatusCode = 500;
+            }
+            catch (Exception e)
             {
                 _logger.LogError("An exception occured " + e.Message);
                 context.Response.StatusCode = 500;

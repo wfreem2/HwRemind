@@ -224,7 +224,7 @@ namespace HwRemind.Tests.Controllers
         {
             if (context != null)
             {
-                return new AuthController(mockLogger.Object, mockJWTService.Object, mockAuthRepo.Object, mockUserRepo.Object, mockCache.Object)
+                return new AuthController(mockLogger.Object, mockJWTService.Object, mockAuthRepo.Object, mockCache.Object)
                 {
                     ControllerContext = new ControllerContext()
                     {
@@ -234,7 +234,7 @@ namespace HwRemind.Tests.Controllers
 
 
             }
-            return new AuthController(mockLogger.Object, mockJWTService.Object, mockAuthRepo.Object, mockUserRepo.Object, mockCache.Object);
+            return new AuthController(mockLogger.Object, mockJWTService.Object, mockAuthRepo.Object, mockCache.Object);
         }
 
 

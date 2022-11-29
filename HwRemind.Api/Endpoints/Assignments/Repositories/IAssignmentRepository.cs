@@ -10,7 +10,7 @@ namespace HwRemind.Api.Endpoints.Assignments.Repositories
         public Task<IEnumerable<Assignment>> GetByUserId(int id, PageFilter filter);
 
         public Task AddAssignment(Assignment assignment);
-        public Task<bool> DeleteAssignment(int id, int loginId);
+        public Task<bool> DeleteAssignment(int id);
         public Task<bool> UpdateAssignment(int id, Assignment assignment);
         public Task<bool> UpdateAssignment(int id, JsonPatchDocument<Assignment> assignment);
     }
